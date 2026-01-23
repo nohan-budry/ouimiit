@@ -1,0 +1,9 @@
+.git
+.github
+.idea
+node_modules
+data
+README.md
+.env
+.DS_Store
+npm-debug.log

@@ -1,0 +1,20 @@
+{
+  "name": "ouimiit",
+  "version": "1.0.0",
+  "main": "server.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nohan-budry/ouimiit"
+  },
+  "homepage": "https://github.com/nohan-budry/ouimiit",
+  "bugs": {
+    "url": "https://github.com/nohan-budry/ouimiit/issues"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
