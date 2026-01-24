@@ -2,7 +2,7 @@
 .github
 .idea
 node_modules
-data
+data/*.json
 README.md
 .env
 .DS_Store

@@ -12,21 +12,48 @@
     <div class="max-w-2xl mx-auto bg-white p-4 sm:p-6 rounded-none shadow-none sm:rounded-xl sm:shadow-lg">
         <h1 class="text-2xl font-bold text-slate-800 mb-6 border-b pb-2">📅 OUIMIIT</h1>
 
-        <div class="mb-8">
-            <label class="block text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Qui êtes-vous ?</label>
-            <div class="flex flex-wrap gap-2">
-                <template x-for="user in config.users">
-                    <button
-                            @click="currentUser = currentUser === user ? '' : user"
-                            x-text="user"
-                            :class="currentUser === user ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-slate-600 border border-slate-200 hover:border-indigo-400'"
-                            class="px-5 py-2 rounded-full text-sm font-medium transition-all duration-200 active:scale-95">
-                    </button>
-                </template>
+        <template x-if="pollId">
+            <div class="mb-8">
+                <label class="block text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Qui êtes-vous ?</label>
+                <div class="flex flex-wrap gap-2">
+                    <template x-for="user in config.users">
+                        <button
+                                @click="currentUser = currentUser === user ? '' : user"
+                                x-text="user"
+                                :class="currentUser === user ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-slate-600 border border-slate-200 hover:border-indigo-400'"
+                                class="px-5 py-2 rounded-full text-sm font-medium transition-all duration-200 active:scale-95">
+                        </button>
+                    </template>
+                </div>
             </div>
-        </div>
+        </template>
 
-        <template x-if="currentUser">
+        <template x-if="!pollId">
+            <div class="mb-8 bg-gray-50 rounded-lg p-4">
+                <label class="block text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Rejoindre un sondage</label>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <input
+                        x-model.trim="joinId"
+                        @input="joinError = ''"
+                        @keydown.enter.prevent="joinPoll"
+                        type="text"
+                        placeholder="ID du sondage"
+                        :class="joinError ? 'border-rose-400 focus:ring-rose-300' : 'border-slate-200 focus:ring-indigo-400'"
+                        class="flex-1 px-4 py-2 rounded-lg border focus:outline-none focus:ring-2">
+                    <button
+                        @click="joinPoll"
+                        :disabled="!joinId"
+                        :class="!joinId ? 'bg-slate-300 text-slate-600' : 'bg-indigo-600 text-white hover:bg-indigo-700'"
+                        class="px-5 py-2 rounded-lg font-semibold transition">
+                        Ouvrir
+                    </button>
+                </div>
+                <p class="text-xs text-slate-500 mt-2">Exemple : <span class="font-semibold">team-a</span></p>
+                <p class="text-xs text-rose-600 mt-2" x-show="joinError" x-text="joinError"></p>
+            </div>
+        </template>
+
+        <template x-if="pollId && currentUser">
             <div class="space-y-3">
                 <template x-for="date in config.dates">
                     <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -54,39 +81,41 @@
             </div>
         </template>
 
-        <div class="mt-10">
-            <h3 class="text-lg font-bold text-slate-800 mb-4">Vue d'ensemble</h3>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr>
-                            <th class="p-2 border-b">Date</th>
-                            <th class="p-2 border-b text-center text-xs hidden sm:table-cell">Nombre</th>
-                            <template x-for="user in config.users">
-                                <th class="p-2 border-b text-center text-xs">
-                                    <span class="sm:hidden" x-text="user.slice(0, 2)"></span>
-                                    <span class="hidden sm:inline" x-text="user"></span>
-                                </th>
-                            </template>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <template x-for="date in config.dates">
-                            <tr :class="countAvailable(date) >= minPeople ? 'bg-gray-100' : ''">
-                                <td class="p-2 border-b text-sm font-medium" x-text="formatDateShort(date)"></td>
-                                <td class="p-2 border-b text-center text-sm font-semibold hidden sm:table-cell" x-text="countAvailable(date)"></td>
+        <template x-if="pollId">
+            <div class="mt-10">
+                <h3 class="text-lg font-bold text-slate-800 mb-4">Vue d'ensemble</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr>
+                                <th class="p-2 border-b">Date</th>
+                                <th class="p-2 border-b text-center text-xs hidden sm:table-cell">Nombre</th>
                                 <template x-for="user in config.users">
-                                    <td class="p-2 border-b text-center">
-                                        <div class="w-3 h-3 mx-auto rounded-full" 
-                                             :class="responses[user]?.[date] ? 'bg-emerald-500' : 'bg-rose-300'"></div>
-                                    </td>
+                                    <th class="p-2 border-b text-center text-xs">
+                                        <span class="sm:hidden" x-text="user.slice(0, 2)"></span>
+                                        <span class="hidden sm:inline" x-text="user"></span>
+                                    </th>
                                 </template>
                             </tr>
-                        </template>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            <template x-for="date in config.dates">
+                                <tr :class="countAvailable(date) >= minPeople ? 'bg-gray-100' : ''">
+                                    <td class="p-2 border-b text-sm font-medium" x-text="formatDateShort(date)"></td>
+                                    <td class="p-2 border-b text-center text-sm font-semibold hidden sm:table-cell" x-text="countAvailable(date)"></td>
+                                    <template x-for="user in config.users">
+                                        <td class="p-2 border-b text-center">
+                                            <div class="w-3 h-3 mx-auto rounded-full" 
+                                                 :class="responses[user]?.[date] ? 'bg-emerald-500' : 'bg-rose-300'"></div>
+                                        </td>
+                                    </template>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
+        </template>
     </div>
 
     <script>
@@ -97,9 +126,53 @@
                 currentUser: '',
                 isSaving: false,
                 saveQueued: false,
+                pollId: '',
+                joinId: '',
+                joinError: '',
                 async init() {
-                    this.config = await (await fetch('/api/config')).json();
-                    this.responses = await (await fetch('/api/responses')).json();
+                    const params = new URLSearchParams(window.location.search);
+                    this.joinId = params.get('id') || '';
+                    if (this.joinId) {
+                        const result = await this.loadPoll(this.joinId);
+                        if (result.ok) {
+                            this.pollId = this.joinId;
+                        } else {
+                            this.joinError = result.message;
+                        }
+                    }
+                },
+                pollUrl(id) {
+                    return `/api/poll?id=${encodeURIComponent(id)}`;
+                },
+                async loadPoll(id) {
+                    const response = await fetch(this.pollUrl(id));
+                    if (!response.ok) {
+                        let message = 'Sondage introuvable';
+                        try {
+                            const data = await response.json();
+                            message = data.error || message;
+                        } catch (error) {
+                            message = 'Sondage introuvable';
+                        }
+                        return { ok: false, message };
+                    }
+                    const poll = await response.json();
+                    this.config = poll.config || { users: [], dates: [] };
+                    this.responses = poll.responses || {};
+                    return { ok: true };
+                },
+                async joinPoll() {
+                    if (!this.joinId) return;
+                    this.joinError = '';
+                    const result = await this.loadPoll(this.joinId);
+                    if (!result.ok) {
+                        this.joinError = result.message;
+                        return;
+                    }
+                    this.pollId = this.joinId;
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('id', this.pollId);
+                    window.history.replaceState({}, '', url);
                 },
                 formatDate(value) {
                     const parts = value.split('-');
@@ -150,12 +223,12 @@
                         return;
                     }
                     this.isSaving = true;
-                    await fetch('/api/responses', {
+                    await fetch(this.pollUrl(this.pollId), {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ user: this.currentUser, availability: this.responses[this.currentUser] })
                     });
-                    this.responses = await (await fetch('/api/responses')).json();
+                    await this.loadPoll(this.pollId);
                     this.isSaving = false;
                     if (this.saveQueued) {
                         this.saveQueued = false;

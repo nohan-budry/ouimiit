@@ -8,21 +8,25 @@ summary table.
 
 ## Configuration
 
-Edit `config.js`:
+Each poll is stored in `data/<id>.json`. The config lives alongside responses:
 
-- `users`: array of user names shown in the UI.
-- `dates`: array of date strings in `YYYY-MM-DD` format.
-- `minPeople`: minimum number of available people required to highlight a day.
-
-Example:
-
-```js
-module.exports = {
-  users: ["Adrien", "Basile"],
-  minPeople: 2,
-  dates: ["2026-02-02", "2026-02-03"]
-};
+```json
+{
+  "config": {
+    "users": ["Adrien", "Basile"],
+    "minPeople": 2,
+    "dates": ["2026-02-02", "2026-02-03"]
+  },
+  "responses": {}
+}
 ```
+
+## Multiple polls
+
+Pass a query param `id` to select a poll:
+
+- `http://localhost:3000` shows the join form
+- `http://localhost:3000/?id=team-a` uses `data/team-a.json`
 
 ## Install
 
@@ -32,8 +36,7 @@ npm install
 
 ## Run (dev)
 
-Dev mode watches `server.js` and hot-reloads the browser when `public/` or
-`config.js` changes.
+Dev mode watches `server.js` for server restarts.
 
 ```bash
 npm run dev
@@ -59,12 +62,11 @@ docker build -t ghcr.io/nohan-budry/ouimiit:latest .
 docker run --rm -p 3000:3000 ghcr.io/nohan-budry/ouimiit:latest
 ```
 
-With volumes for persistent data and custom config:
+With a volume for persistent poll data:
 
 ```bash
 docker run --rm -p 3000:3000 \
   -v "$(pwd)/data:/app/data" \
-  -v "$(pwd)/config.js:/app/config.js:ro" \
   ghcr.io/nohan-budry/ouimiit:latest
 ```
 
@@ -78,5 +80,4 @@ services:
       - "3000:3000"
     volumes:
       - ./data:/app/data
-      - ./config.js:/app/config.js:ro
 ```

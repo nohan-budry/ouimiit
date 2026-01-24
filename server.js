@@ -1,28 +1,74 @@
 const express = require('express');
 const fs = require('fs');
-const config = require('./config');
+const path = require('path');
 const app = express();
 
 app.use(express.json());
 app.use(express.static('public'));
 
-const DATA_FILE = './data/data.json';
+const DATA_DIR = path.join(__dirname, 'data');
 
-if (!fs.existsSync(DATA_FILE)) {
-    fs.writeFileSync(DATA_FILE, JSON.stringify({}));
-}
+const ensureDataDir = () => {
+    if (!fs.existsSync(DATA_DIR)) {
+        fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+};
 
-app.get('/api/config', (req, res) => res.json(config));
-app.get('/api/responses', (req, res) => {
-    const data = JSON.parse(fs.readFileSync(DATA_FILE));
-    res.json(data);
+const sanitizePollId = (rawId) => {
+    if (!rawId) return null;
+    if (!/^[a-z0-9_-]+$/i.test(rawId)) return null;
+    return rawId;
+};
+
+const getPollFilePath = (pollId) => path.join(DATA_DIR, `${pollId}.json`);
+
+const loadPoll = (pollId) => {
+    ensureDataDir();
+    const pollFile = getPollFilePath(pollId);
+    if (!fs.existsSync(pollFile)) {
+        return null;
+    }
+    return JSON.parse(fs.readFileSync(pollFile));
+};
+
+const savePoll = (pollId, poll) => {
+    ensureDataDir();
+    const pollFile = getPollFilePath(pollId);
+    fs.writeFileSync(pollFile, JSON.stringify(poll, null, 2));
+};
+
+app.get('/api/poll', (req, res) => {
+    const pollId = sanitizePollId(req.query.id);
+    if (!pollId) {
+        res.status(400).json({ error: "Identifiant du sondage manquant ou invalide" });
+        return;
+    }
+    const poll = loadPoll(pollId);
+    if (!poll) {
+        res.status(404).json({ error: 'Sondage introuvable' });
+        return;
+    }
+    res.json(poll);
 });
 
-app.post('/api/responses', (req, res) => {
+app.post('/api/poll', (req, res) => {
+    const pollId = sanitizePollId(req.query.id);
+    if (!pollId) {
+        res.status(400).json({ error: "Identifiant du sondage manquant ou invalide" });
+        return;
+    }
     const { user, availability } = req.body;
-    const data = JSON.parse(fs.readFileSync(DATA_FILE));
-    data[user] = availability;
-    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+    if (!user) {
+        res.status(400).json({ error: 'Utilisateur manquant' });
+        return;
+    }
+    const poll = loadPoll(pollId);
+    if (!poll) {
+        res.status(404).json({ error: 'Sondage introuvable' });
+        return;
+    }
+    poll.responses[user] = availability || {};
+    savePoll(pollId, poll);
     res.sendStatus(200);
 });
 
