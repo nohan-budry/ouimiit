@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!--suppress HtmlUnknownAttribute, HtmlUnknownTarget -->
+<!--suppress HtmlUnknownAttribute, HtmlUnknownTarget, HtmlUnknownTag, HttpUrlsUsage -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -32,7 +32,9 @@
             <div class="mb-8 bg-gray-50 rounded-lg p-4">
                 <label class="block text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Rejoindre un sondage</label>
                 <div class="flex flex-col sm:flex-row gap-3">
+                    <label class="sr-only" for="poll-id">ID du sondage</label>
                     <input
+                        id="poll-id"
                         x-model.trim="joinId"
                         @input="joinError = ''"
                         @keydown.enter.prevent="joinPoll"
@@ -57,7 +59,10 @@
             <div class="space-y-3">
                 <template x-for="date in config.dates">
                     <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <span class="font-medium text-slate-700" x-text="formatDate(date)"></span>
+                        <span class="font-medium text-slate-700">
+                            <span class="sm:hidden" x-text="formatDateWithWeekdayShort(date)"></span>
+                            <span class="hidden sm:inline" x-text="formatDateWithWeekday(date)"></span>
+                        </span>
                         <div class="flex items-center gap-3">
                             <span class="text-xs font-semibold text-slate-500" x-text="countAvailable(date) + ' / ' + config.users.length"></span>
                             <button @click="toggleDate(date)"
@@ -85,7 +90,7 @@
             <div class="mt-10">
                 <h3 class="text-lg font-bold text-slate-800 mb-4">Vue d'ensemble</h3>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
+                <table class="w-full text-left border-collapse">
                         <thead>
                             <tr>
                                 <th class="p-2 border-b">Date</th>
@@ -98,10 +103,13 @@
                                 </template>
                             </tr>
                         </thead>
-                        <tbody>
+                    <tbody>
                             <template x-for="date in config.dates">
                                 <tr :class="countAvailable(date) >= minPeople ? 'bg-gray-100' : ''">
-                                    <td class="p-2 border-b text-sm font-medium" x-text="formatDateShort(date)"></td>
+                                <td class="p-2 border-b text-sm font-medium">
+                                    <span class="sm:hidden" x-text="formatDateShort(date)"></span>
+                                    <span class="hidden sm:inline" x-text="formatDateShortWithWeekday(date)"></span>
+                                </td>
                                     <td class="p-2 border-b text-center text-sm font-semibold hidden sm:table-cell" x-text="countAvailable(date)"></td>
                                     <template x-for="user in config.users">
                                         <td class="p-2 border-b text-center">
@@ -125,7 +133,7 @@
                 responses: {},
                 currentUser: '',
                 isSaving: false,
-                saveQueued: false,
+                pendingSaves: [],
                 pollId: '',
                 joinId: '',
                 joinError: '',
@@ -197,12 +205,73 @@
                     const day = parts[2].padStart(2, '0');
                     return `${day} ${monthName} ${parts[0]}`;
                 },
+                formatDateWithWeekday(value) {
+                    const parts = value.split('-');
+                    if (parts.length !== 3) return value;
+                    const year = Number(parts[0]);
+                    const month = Number(parts[1]) - 1;
+                    const day = Number(parts[2]);
+                    const date = new Date(Date.UTC(year, month, day));
+                    const weekdays = [
+                        'lundi',
+                        'mardi',
+                        'mercredi',
+                        'jeudi',
+                        'vendredi',
+                        'samedi',
+                        'dimanche',
+                    ];
+                    const weekday = weekdays[date.getUTCDay()] || '';
+                    const capitalized = weekday ? `${weekday[0].toUpperCase()}${weekday.slice(1)}` : '';
+                    return `${capitalized} ${this.formatDate(value)}`;
+                },
+                formatDateWithWeekdayShort(value) {
+                    const parts = value.split('-');
+                    if (parts.length !== 3) return value;
+                    const year = Number(parts[0]);
+                    const month = Number(parts[1]) - 1;
+                    const day = Number(parts[2]);
+                    const date = new Date(Date.UTC(year, month, day));
+                    const weekdays = [
+                        'dimanche',
+                        'lundi',
+                        'mardi',
+                        'mercredi',
+                        'jeudi',
+                        'vendredi',
+                        'samedi'
+                    ];
+                    const weekday = weekdays[date.getUTCDay()] || '';
+                    const shortName = weekday ? `${weekday[0].toUpperCase()}${weekday[1]}.` : '';
+                    return `${shortName} ${this.formatDate(value)}`;
+                },
                 formatDateShort(value) {
                     const parts = value.split('-');
                     if (parts.length !== 3) return value;
                     const day = parts[2].padStart(2, '0');
                     const month = parts[1].padStart(2, '0');
-                    return `${day}.${month}`;
+                    const year = parts[0].slice(-2);
+                    return `${day}.${month}.${year}`;
+                },
+                formatDateShortWithWeekday(value) {
+                    const parts = value.split('-');
+                    if (parts.length !== 3) return value;
+                    const year = Number(parts[0]);
+                    const month = Number(parts[1]) - 1;
+                    const day = Number(parts[2]);
+                    const date = new Date(Date.UTC(year, month, day));
+                    const weekdays = [
+                        'dimanche',
+                        'lundi',
+                        'mardi',
+                        'mercredi',
+                        'jeudi',
+                        'vendredi',
+                        'samedi'
+                    ];
+                    const weekday = weekdays[date.getUTCDay()] || '';
+                    const shortName = weekday ? `${weekday[0].toUpperCase()}${weekday[1]}.` : '';
+                    return `${shortName} ${this.formatDateShort(value)}`;
                 },
                 countAvailable(date) {
                     return this.config.users.reduce((count, user) => {
@@ -214,26 +283,30 @@
                 },
                 toggleDate(date) {
                     if (!this.responses[this.currentUser]) this.responses[this.currentUser] = {};
-                    this.responses[this.currentUser][date] = !this.responses[this.currentUser][date];
-                    this.save();
+                    const nextValue = !this.responses[this.currentUser][date];
+                    this.responses[this.currentUser][date] = nextValue;
+                    this.queueSave(date, nextValue);
                 },
-                async save() {
-                    if (this.isSaving) {
-                        this.saveQueued = true;
-                        return;
-                    }
+                queueSave(date, available) {
+                    this.pendingSaves.push({
+                        user: this.currentUser,
+                        date,
+                        available
+                    });
+                    this.processSaveQueue();
+                },
+                async processSaveQueue() {
+                    if (this.isSaving || this.pendingSaves.length === 0) return;
                     this.isSaving = true;
+                    const next = this.pendingSaves.shift();
                     await fetch(this.pollUrl(this.pollId), {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ user: this.currentUser, availability: this.responses[this.currentUser] })
+                        body: JSON.stringify(next)
                     });
                     await this.loadPoll(this.pollId);
                     this.isSaving = false;
-                    if (this.saveQueued) {
-                        this.saveQueued = false;
-                        this.save();
-                    }
+                    this.processSaveQueue();
                 }
             }
         }

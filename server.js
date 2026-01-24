@@ -57,9 +57,13 @@ app.post('/api/poll', (req, res) => {
         res.status(400).json({ error: "Identifiant du sondage manquant ou invalide" });
         return;
     }
-    const { user, availability } = req.body;
+    const { user, date, available } = req.body;
     if (!user) {
         res.status(400).json({ error: 'Utilisateur manquant' });
+        return;
+    }
+    if (!date || typeof available !== 'boolean') {
+        res.status(400).json({ error: 'Date ou disponibilite invalide' });
         return;
     }
     const poll = loadPoll(pollId);
@@ -67,7 +71,10 @@ app.post('/api/poll', (req, res) => {
         res.status(404).json({ error: 'Sondage introuvable' });
         return;
     }
-    poll.responses[user] = availability || {};
+    if (!poll.responses[user]) {
+        poll.responses[user] = {};
+    }
+    poll.responses[user][date] = available;
     savePoll(pollId, poll);
     res.sendStatus(200);
 });
