@@ -9,7 +9,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-white p-2 sm:bg-slate-100 sm:p-4 md:p-8" x-data="planner()">
-    <div class="max-w-2xl mx-auto bg-white p-4 sm:p-6 rounded-none shadow-none sm:rounded-xl sm:shadow-lg">
+    <div class="max-w-4xl mx-auto bg-white p-4 sm:p-6 rounded-none shadow-none sm:rounded-xl sm:shadow-lg">
         <h1 class="text-2xl font-bold text-slate-800 mb-6 border-b pb-2">📅 OUIMIIT</h1>
 
         <template x-if="pollId">
@@ -93,7 +93,9 @@
                 <table class="w-full text-left border-collapse">
                         <thead>
                             <tr>
-                                <th class="p-2 border-b">Date</th>
+                                <th class="p-2 border-b md:hidden">Date</th>
+                                <th class="p-2 border-b hidden md:table-cell" colspan="2">Date</th>
+                                <th class="p-2 border-b text-center text-xs sm:hidden">#</th>
                                 <th class="p-2 border-b text-center text-xs hidden sm:table-cell">Nombre</th>
                                 <template x-for="user in config.users">
                                     <th class="p-2 border-b text-center text-xs">
@@ -106,14 +108,16 @@
                     <tbody>
                             <template x-for="date in config.dates">
                                 <tr :class="countAvailable(date) >= minPeople ? 'bg-gray-100' : ''">
-                                <td class="p-2 border-b text-sm font-medium">
-                                    <span class="sm:hidden" x-text="formatDateShort(date)"></span>
-                                    <span class="hidden sm:inline" x-text="formatDateShortWithWeekday(date)"></span>
-                                </td>
-                                    <td class="p-2 border-b text-center text-sm font-semibold hidden sm:table-cell" x-text="countAvailable(date)"></td>
+                                    <td class="p-2 border-b hidden md:table-cell" x-text="formatWeekdayShort(date)"></td>
+                                    <td class="p-2 border-b text-sm font-medium">
+                                        <span class="sm:hidden" x-text="formatDateShortNoYear(date)"></span>
+                                        <span class="hidden sm:inline md:hidden" x-text="formatDateShort(date)"></span>
+                                        <span class="hidden md:inline" x-text="formatDate(date)"></span>
+                                    </td>
+                                    <td class="p-2 border-b text-center text-sm font-semibold" x-text="countAvailable(date)"></td>
                                     <template x-for="user in config.users">
                                         <td class="p-2 border-b text-center">
-                                            <div class="w-3 h-3 mx-auto rounded-full" 
+                                            <div class="w-3 h-3 mx-auto rounded-full"
                                                  :class="responses[user]?.[date] ? 'bg-emerald-500' : 'bg-rose-300'"></div>
                                         </td>
                                     </template>
@@ -182,6 +186,26 @@
                     url.searchParams.set('id', this.pollId);
                     window.history.replaceState({}, '', url);
                 },
+                  formatWeekdayShort(value) {
+                    const parts = value.split('-');
+                    if (parts.length !== 3) return value;
+                    const year = Number(parts[0]);
+                    const month = Number(parts[1]) - 1;
+                    const day = Number(parts[2]);
+                    const date = new Date(Date.UTC(year, month, day));
+                    const weekdays = [
+                      'lundi',
+                      'mardi',
+                      'mercredi',
+                      'jeudi',
+                      'vendredi',
+                      'samedi',
+                      'dimanche',
+                    ];
+                    const weekday = weekdays[date.getUTCDay()] || '';
+                    const capitalized = weekday ? `${weekday[0].toUpperCase()}${weekday.slice(1)}` : '';
+                    return `${capitalized.slice(0, 2)}.`;
+                  },
                 formatDate(value) {
                     const parts = value.split('-');
                     if (parts.length !== 3) return value;
@@ -253,6 +277,13 @@
                     const year = parts[0].slice(-2);
                     return `${day}.${month}.${year}`;
                 },
+                  formatDateShortNoYear(value) {
+                    const parts = value.split('-');
+                    if (parts.length !== 3) return value;
+                    const day = parts[2].padStart(2, '0');
+                    const month = parts[1].padStart(2, '0');
+                    return `${day}.${month}`;
+                  },
                 formatDateShortWithWeekday(value) {
                     const parts = value.split('-');
                     if (parts.length !== 3) return value;
