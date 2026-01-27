@@ -194,13 +194,13 @@
                     const day = Number(parts[2]);
                     const date = new Date(Date.UTC(year, month, day));
                     const weekdays = [
+                      'dimanche',
                       'lundi',
                       'mardi',
                       'mercredi',
                       'jeudi',
                       'vendredi',
                       'samedi',
-                      'dimanche',
                     ];
                     const weekday = weekdays[date.getUTCDay()] || '';
                     const capitalized = weekday ? `${weekday[0].toUpperCase()}${weekday.slice(1)}` : '';
@@ -237,13 +237,13 @@
                     const day = Number(parts[2]);
                     const date = new Date(Date.UTC(year, month, day));
                     const weekdays = [
+                        'dimanche',
                         'lundi',
                         'mardi',
                         'mercredi',
                         'jeudi',
                         'vendredi',
                         'samedi',
-                        'dimanche',
                     ];
                     const weekday = weekdays[date.getUTCDay()] || '';
                     const capitalized = weekday ? `${weekday[0].toUpperCase()}${weekday.slice(1)}` : '';
