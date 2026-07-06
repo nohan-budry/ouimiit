@@ -33,7 +33,7 @@ Returns the data for a specific poll.
 
 ### Update Poll Response
 
-Updates or adds a user's availability for a specific date in a poll.
+Updates or adds a user's availability for one or multiple dates in a poll.
 
 - **URL**: `/api/poll`
 - **Method**: `POST`
@@ -43,14 +43,16 @@ Updates or adds a user's availability for a specific date in a poll.
   ```json
   {
     "user": "string",
-    "date": "string",
-    "available": "boolean"
+    "updates": [
+      { "date": "string", "available": "boolean" }
+    ]
   }
   ```
 - **Success Response**:
   - **Code**: 200 OK
+  - **Content**: A JSON object representing the updated poll.
 - **Error Responses**:
-  - **Code**: 400 Bad Request (Missing user, invalid date or availability, or invalid ID)
+  - **Code**: 400 Bad Request (Missing user, invalid updates format, invalid update item, date not in poll, or invalid ID)
   - **Code**: 404 Not Found (Poll not found)
 
 ## Storage
