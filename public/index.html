@@ -35,44 +35,182 @@
                 </div>
             </template>
 
-            <!-- Step 0: Join Poll -->
+            <!-- Step 0: Join or Create Poll -->
             <template x-if="!pollId">
-                <div class="bg-white p-6 sm:p-8 rounded-3xl border border-slate-100">
-                    <h2 class="text-xl font-bold text-slate-800 mb-6">Ouvrir un sondage</h2>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="sr-only" for="poll-id">ID du sondage</label>
-                            <input
-                                id="poll-id"
-                                x-model.trim="joinId"
-                                @input="joinError = ''"
-                                @keydown.enter.prevent="joinPoll"
-                                type="text"
-                                placeholder="ID du sondage (ex: team-a)"
-                                :class="joinError ? 'border-rose-300 focus:border-rose-400' : 'border-blue-100 focus:border-blue-300'"
-                                class="w-full px-5 py-4 rounded-2xl border bg-blue-50/50 focus:outline-none transition-all text-lg">
+                <div class="space-y-6">
+                    <!-- Join Island -->
+                    <div class="bg-white p-6 sm:p-8 rounded-3xl border border-slate-100">
+                        <h2 class="text-xl font-bold text-slate-800 mb-6">Ouvrir un sondage</h2>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="sr-only" for="poll-id">ID du sondage</label>
+                                <input
+                                    id="poll-id"
+                                    x-model.trim="joinId"
+                                    @input="joinError = ''"
+                                    @keydown.enter.prevent="joinPoll"
+                                    type="text"
+                                    placeholder="ID du sondage (ex: team-a)"
+                                    :class="joinError ? 'border-rose-300 focus:border-rose-400' : 'border-blue-100 focus:border-blue-300'"
+                                    class="w-full px-5 py-4 rounded-2xl border bg-blue-50/50 focus:outline-none transition-all text-lg">
+                            </div>
+                            <button
+                                @click="joinPoll"
+                                :disabled="!joinId"
+                                :class="!joinId ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-slate-800 text-white hover:bg-slate-700 active:scale-[0.98]'"
+                                class="w-full py-4 rounded-2xl font-bold text-lg transition-all">
+                                Continuer
+                            </button>
+                            <p class="text-center text-sm text-rose-500 font-medium" x-show="joinError" x-text="joinError"></p>
                         </div>
-                        <button
-                            @click="joinPoll"
-                            :disabled="!joinId"
-                            :class="!joinId ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-slate-800 text-white hover:bg-slate-700 active:scale-[0.98]'"
-                            class="w-full py-4 rounded-2xl font-bold text-lg transition-all">
-                            Continuer
-                        </button>
-                        <p class="text-center text-sm text-rose-500 font-medium" x-show="joinError" x-text="joinError"></p>
+                    </div>
+
+                    <!-- Create Island -->
+                    <div class="bg-white p-6 sm:p-8 rounded-3xl border border-slate-100">
+                        <h2 class="text-xl font-bold text-slate-800 mb-6">Créer un nouveau sondage</h2>
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2" for="create-id">Identifiant du sondage</label>
+                                <div class="relative">
+                                    <input
+                                        id="create-id"
+                                        x-model.trim="createForm.id"
+                                        type="text"
+                                        placeholder="ex: vacances-2026"
+                                        class="w-full px-4 py-3 pr-12 rounded-xl border border-blue-100 bg-blue-50/50 focus:outline-none focus:border-blue-300 transition-all">
+                                    <button 
+                                        @click="createForm.id = generateRandomId()"
+                                        title="Générer un ID aléatoire"
+                                        class="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-blue-500 transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Participants</label>
+                                    <div class="space-y-2">
+                                        <template x-for="(user, index) in createForm.users" :key="index">
+                                            <div class="flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    x-model="createForm.users[index]"
+                                                    placeholder="Nom"
+                                                    class="flex-1 px-3 py-2 rounded-lg border border-blue-100 bg-blue-50/50 focus:outline-none focus:border-blue-300 transition-all text-sm">
+                                                <button 
+                                                    @click="removeUser(index)"
+                                                    class="text-slate-300 hover:text-rose-500 transition-colors"
+                                                    :disabled="createForm.users.length <= 1"
+                                                    x-show="createForm.users.length > 1">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </template>
+                                        <button @click="addUser()" class="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 mt-1 transition-colors">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                            </svg>
+                                            Ajouter un participant
+                                        </button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Dates</label>
+                                    <div class="space-y-2">
+                                        <template x-for="(date, index) in createForm.dates" :key="index">
+                                            <div class="flex items-center gap-2">
+                                                <div class="flex-1 relative">
+                                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 uppercase pointer-events-none" x-text="formatWeekdayShort(createForm.dates[index])"></span>
+                                                    <input
+                                                        type="date"
+                                                        x-model="createForm.dates[index]"
+                                                        class="w-full pl-12 pr-3 py-2 rounded-lg border border-blue-100 bg-blue-50/50 focus:outline-none focus:border-blue-300 transition-all text-sm">
+                                                </div>
+                                                <button 
+                                                    @click="removeDate(index)"
+                                                    class="text-slate-300 hover:text-rose-500 transition-colors"
+                                                    :disabled="createForm.dates.length <= 1"
+                                                    x-show="createForm.dates.length > 1">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </template>
+                                        <button @click="addDate()" class="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 mt-1 transition-colors">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                            </svg>
+                                            Ajouter une date
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2" for="create-min">Minimum de personnes (optionnel)</label>
+                                <input
+                                    id="create-min"
+                                    x-model.number="createForm.minPeople"
+                                    type="number"
+                                    min="0"
+                                    class="w-full px-4 py-3 rounded-xl border border-blue-100 bg-blue-50/50 focus:outline-none focus:border-blue-300 transition-all">
+                            </div>
+
+                            <button
+                                @click="createPoll"
+                                :disabled="isCreating || !createForm.id || createForm.users.filter(u => u.trim()).length === 0 || createForm.dates.filter(d => d.trim()).length === 0"
+                                :class="(isCreating || !createForm.id || createForm.users.filter(u => u.trim()).length === 0 || createForm.dates.filter(d => d.trim()).length === 0) ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-[0.98]'"
+                                class="w-full py-4 rounded-2xl font-bold text-lg transition-all flex items-center justify-center gap-2">
+                                <svg x-show="isCreating" class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span x-text="isCreating ? 'Création...' : 'Créer le sondage'"></span>
+                            </button>
+                            <p class="text-center text-sm text-rose-500 font-medium" x-show="createError" x-text="createError"></p>
+                        </div>
                     </div>
                 </div>
             </template>
 
             <!-- Step 1: User Selection -->
             <template x-if="pollId && !currentUser">
-                <div class="space-y-4">
+                <div class="space-y-6">
+                    <div class="flex items-center justify-center">
+                        <div 
+                            @click="
+                                navigator.clipboard.writeText(window.location.href); 
+                                copied = true; 
+                                setTimeout(() => copied = false, 2000)
+                            "
+                            x-data="{ copied: false }"
+                            class="inline-flex items-center gap-3 px-6 py-3 rounded-2xl bg-white border border-slate-100 text-slate-600 font-bold hover:bg-blue-50 hover:border-blue-100 transition-all cursor-pointer group"
+                            title="Copier le lien"
+                        >
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Sondage</span>
+                            <span class="text-slate-800" x-text="pollId"></span>
+                            <div class="p-1 group-hover:text-blue-500 transition-colors">
+                                <svg x-show="!copied" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                                </svg>
+                                <svg x-show="copied" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
                     <div class="bg-white p-6 sm:p-8 rounded-3xl border border-slate-100">
                         <h2 class="text-xl font-bold text-slate-800 mb-6">Qui êtes-vous ?</h2>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <template x-for="user in config.users">
                                 <button
-                                    @click="currentUser = user"
+                                    @click="currentUser = user; window.scrollTo({ top: 0, behavior: 'smooth' });"
                                     class="group relative flex items-center justify-between p-4 rounded-2xl border-2 border-blue-50 bg-white hover:border-blue-200 hover:bg-blue-50/30 transition-all text-left">
                                     <span class="font-bold text-slate-700" x-text="user"></span>
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-300 group-hover:text-slate-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -89,7 +227,7 @@
             <template x-if="pollId && currentUser">
                 <div class="space-y-4">
                     <div class="flex items-center justify-between px-2">
-                        <button @click="currentUser = ''" class="flex items-center text-slate-500 hover:text-slate-800 font-bold transition-colors">
+                        <button @click="currentUser = ''; window.scrollTo({ top: 0, behavior: 'smooth' });" class="flex items-center text-slate-500 hover:text-slate-800 font-bold transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                             </svg>
@@ -139,7 +277,7 @@
                             </template>
                         </div>
                     <div class="p-6 bg-white flex justify-center">
-                            <button @click="currentUser = ''" class="bg-slate-800 text-white px-8 py-3 rounded-2xl font-bold hover:bg-slate-700 active:scale-95 transition-all">
+                            <button @click="currentUser = ''; $nextTick(() => { document.getElementById('overview-section')?.scrollIntoView({ behavior: 'smooth' }); });" class="bg-slate-800 text-white px-8 py-3 rounded-2xl font-bold hover:bg-slate-700 active:scale-95 transition-all">
                                 Terminer
                             </button>
                         </div>
@@ -149,7 +287,7 @@
 
             <!-- Step 3: Global Overview -->
             <template x-if="pollId && !currentUser">
-                <div class="mt-6 space-y-4" x-transition>
+                <div id="overview-section" class="mt-6 space-y-4" x-transition>
                     <div class="bg-white p-6 sm:p-8 rounded-3xl border border-slate-100 overflow-hidden">
                         <div class="flex items-center justify-between mb-6">
                             <h3 class="text-xl font-bold text-slate-800">Disponibilités</h3>
@@ -176,7 +314,7 @@
                                 </thead>
                                 <tbody class="divide-y divide-slate-100">
                                     <template x-for="date in config.dates">
-                                        <tr :class="countAvailable(date) >= minPeople ? 'bg-blue-50/40' : ''">
+                                        <tr :class="minPeople > 0 && countAvailable(date) >= minPeople ? 'bg-blue-50/40' : ''">
                                             <td class="p-4">
                                                 <div class="flex flex-col">
                                                     <span class="text-[10px] font-bold text-slate-400 uppercase" x-text="formatWeekdayShort(date)"></span>
@@ -185,7 +323,7 @@
                                             </td>
                                             <td class="p-4 text-center">
                                                 <span class="inline-flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm"
-                                                      :class="countAvailable(date) >= minPeople ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-50 text-blue-600'"
+                                                      :class="minPeople > 0 && countAvailable(date) >= minPeople ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-50 text-blue-600'"
                                                       x-text="countAvailable(date)"></span>
                                             </td>
                                             <template x-for="user in config.users">
@@ -205,25 +343,8 @@
         </main>
 
         <!-- Actions Section -->
-        <template x-if="pollId">
-            <div class="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4" x-data="{ copied: false }">
-                <button 
-                    @click="
-                        navigator.clipboard.writeText(window.location.href); 
-                        copied = true; 
-                        setTimeout(() => copied = false, 2000)
-                    "
-                    class="flex items-center gap-2 px-6 py-3 rounded-2xl bg-white border border-slate-100 text-slate-600 font-bold hover:bg-blue-50 hover:border-blue-100 transition-all active:scale-95"
-                >
-                    <svg x-show="!copied" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                    </svg>
-                    <svg x-show="copied" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span x-text="copied ? 'Lien copié !' : 'Copier le lien du sondage'"></span>
-                </button>
-
+        <template x-if="pollId && !currentUser">
+            <div class="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
                 <button 
                     @click="
                         pollId = '';
@@ -231,10 +352,24 @@
                         const url = new URL(window.location.href);
                         url.searchParams.delete('id');
                         window.history.replaceState({}, '', url);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
                     "
-                    class="text-slate-400 hover:text-slate-600 font-bold text-sm transition-colors px-4 py-2"
+                    class="flex items-center gap-1 text-slate-400 hover:text-slate-600 font-bold text-sm transition-colors px-4 py-2"
                 >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
+                    </svg>
                     Fermer le sondage
+                </button>
+
+                <button 
+                    @click="duplicatePoll()"
+                    class="flex items-center gap-2 px-6 py-3 rounded-2xl bg-white border border-slate-100 text-slate-600 font-bold hover:bg-blue-50 hover:border-blue-100 transition-all active:scale-95"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                    </svg>
+                    <span>Créer un nouveau à partir d'ici</span>
                 </button>
             </div>
         </template>
@@ -255,7 +390,71 @@
                 pollId: '',
                 joinId: '',
                 joinError: '',
+                createForm: {
+                    id: '',
+                    users: [],
+                    dates: [],
+                    minPeople: ''
+                },
+                generateRandomId() {
+                    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                    let result = '';
+                    for (let i = 0; i < 16; i++) {
+                        result += chars.charAt(Math.floor(Math.random() * chars.length));
+                    }
+                    return result;
+                },
+                addUser() {
+                    this.createForm.users.push('');
+                },
+                removeUser(index) {
+                    this.createForm.users.splice(index, 1);
+                },
+                addDate() {
+                    let nextDate = '';
+                    if (this.createForm.dates.length > 0) {
+                        const lastDateStr = this.createForm.dates[this.createForm.dates.length - 1];
+                        if (lastDateStr) {
+                            const lastDate = new Date(lastDateStr);
+                            if (!isNaN(lastDate.getTime())) {
+                                lastDate.setDate(lastDate.getDate() + 1);
+                                nextDate = lastDate.toISOString().split('T')[0];
+                            }
+                        }
+                    }
+                    if (!nextDate) {
+                        nextDate = new Date().toISOString().split('T')[0];
+                    }
+                    this.createForm.dates.push(nextDate);
+                },
+                removeDate(index) {
+                    this.createForm.dates.splice(index, 1);
+                },
+                duplicatePoll() {
+                    this.createForm.users = [...this.config.users];
+                    this.createForm.minPeople = this.config.minPeople;
+                    this.createForm.id = this.generateRandomId();
+                    // Keep one date by default or copy? Usually when duplicating a poll for a new meeting, 
+                    // you want new dates, so we just keep the default date logic from init or keep current date.
+                    this.createForm.dates = [new Date().toISOString().split('T')[0]];
+                    
+                    this.pollId = '';
+                    this.currentUser = '';
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete('id');
+                    window.history.replaceState({}, '', url);
+                    
+                    // Scroll to top to see the creation form
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                },
+                createError: '',
+                isCreating: false,
                 async init() {
+                    this.createForm.id = this.generateRandomId();
+                    this.createForm.users = ['', '', ''];
+                    this.createForm.dates = [new Date().toISOString().split('T')[0]];
+                    this.createForm.minPeople = '';
+
                     const params = new URLSearchParams(window.location.search);
                     this.joinId = params.get('id') || '';
                     if (this.joinId) {
@@ -299,6 +498,7 @@
                     const url = new URL(window.location.href);
                     url.searchParams.set('id', this.pollId);
                     window.history.replaceState({}, '', url);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                 },
                   formatWeekdayShort(value) {
                     const date = new Date(`${value}T00:00:00Z`);
@@ -358,7 +558,7 @@
                     const next = this.pendingSaves[0];
                     try {
                         const response = await fetch(this.pollUrl(this.pollId), {
-                            method: 'POST',
+                            method: 'PATCH',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(next)
                         });
@@ -373,6 +573,52 @@
                     } finally {
                         this.isSaving = false;
                         this.processSaveQueue();
+                    }
+                },
+                async createPoll() {
+                    if (this.isCreating) return;
+                    this.createError = '';
+                    this.isCreating = true;
+
+                    const users = this.createForm.users.map(u => u.trim()).filter(u => u !== '');
+                    const dates = this.createForm.dates.map(d => d.trim()).filter(d => d !== '');
+
+                    try {
+                        const response = await fetch('/api/poll', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                id: this.createForm.id,
+                                users: users,
+                                dates: dates,
+                                minPeople: this.createForm.minPeople
+                            })
+                        });
+
+                        const data = await response.json();
+                        if (!response.ok) {
+                            this.createError = data.error || 'Erreur lors de la création';
+                            return;
+                        }
+
+                        this.pollId = data.id;
+                        this.config = data.config;
+                        this.responses = data.responses;
+
+                        const url = new URL(window.location.href);
+                        url.searchParams.set('id', this.pollId);
+                        window.history.replaceState({}, '', url);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        
+                        // Reset form
+                        this.createForm.id = this.generateRandomId();
+                        this.createForm.users = ['', '', ''];
+                        this.createForm.dates = [new Date().toISOString().split('T')[0]];
+                        this.createForm.minPeople = '';
+                    } catch (e) {
+                        this.createError = 'Erreur réseau';
+                    } finally {
+                        this.isCreating = false;
                     }
                 }
             }

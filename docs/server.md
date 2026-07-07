@@ -36,7 +36,7 @@ Returns the data for a specific poll.
 Updates or adds a user's availability for one or multiple dates in a poll.
 
 - **URL**: `/api/poll`
-- **Method**: `POST`
+- **Method**: `PATCH`
 - **Query Parameters**:
   - `id` (string, required): The unique identifier of the poll.
 - **Data Params**:
@@ -54,6 +54,27 @@ Updates or adds a user's availability for one or multiple dates in a poll.
 - **Error Responses**:
   - **Code**: 400 Bad Request (Missing user, invalid updates format, invalid update item, date not in poll, or invalid ID)
   - **Code**: 404 Not Found (Poll not found)
+
+### Create Poll
+
+Creates a new poll with a configuration of users and dates.
+
+- **URL**: `/api/poll`
+- **Method**: `POST`
+- **Data Params**:
+  ```json
+  {
+    "id": "string",
+    "users": ["string"],
+    "dates": ["string"],
+    "minPeople": "number (optional)"
+  }
+  ```
+- **Success Response**:
+  - **Code**: 200 OK
+  - **Content**: A JSON object representing the newly created poll, including the ID.
+- **Error Responses**:
+  - **Code**: 400 Bad Request (Invalid ID, poll already exists, missing users, or missing dates)
 
 ## Storage
 

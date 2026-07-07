@@ -51,7 +51,7 @@ app.get('/api/poll', (req, res) => {
     res.json(poll);
 });
 
-app.post('/api/poll', (req, res) => {
+app.patch('/api/poll', (req, res) => {
     const pollId = sanitizePollId(req.query.id);
     if (!pollId) {
         res.status(400).json({ error: "Identifiant du sondage manquant ou invalide" });
@@ -94,6 +94,42 @@ app.post('/api/poll', (req, res) => {
 
     savePoll(pollId, poll);
     res.json(poll);
+});
+
+app.post('/api/poll', (req, res) => {
+    const pollId = sanitizePollId(req.body.id);
+    if (!pollId) {
+        res.status(400).json({ error: "Identifiant du sondage invalide" });
+        return;
+    }
+
+    const pollFile = getPollFilePath(pollId);
+    if (fs.existsSync(pollFile)) {
+        res.status(400).json({ error: "Ce sondage existe déjà" });
+        return;
+    }
+
+    const { users, dates, minPeople } = req.body;
+    if (!Array.isArray(users) || users.length === 0) {
+        res.status(400).json({ error: "La liste des participants est requise" });
+        return;
+    }
+    if (!Array.isArray(dates) || dates.length === 0) {
+        res.status(400).json({ error: "La liste des dates est requise" });
+        return;
+    }
+
+    const poll = {
+        config: {
+            users,
+            dates,
+            minPeople: Number(minPeople) || 0
+        },
+        responses: {}
+    };
+
+    savePoll(pollId, poll);
+    res.json({ id: pollId, ...poll });
 });
 
 app.listen(3000, () => console.log('Server running on port 3000'));
