@@ -66,7 +66,7 @@
                     </div>
 
                     <!-- Create Island -->
-                    <div class="bg-white p-6 sm:p-8 rounded-3xl border border-slate-100">
+                    <div id="create-poll-island" class="bg-white p-6 sm:p-8 rounded-3xl border border-slate-100">
                         <h2 class="text-xl font-bold text-slate-800 mb-6">Créer un nouveau sondage</h2>
                         <div class="space-y-6">
                             <div>
@@ -444,8 +444,10 @@
                     url.searchParams.delete('id');
                     window.history.replaceState({}, '', url);
                     
-                    // Scroll to top to see the creation form
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    // Scroll to the creation form
+                    this.$nextTick(() => {
+                        document.getElementById('create-poll-island')?.scrollIntoView({ behavior: 'smooth' });
+                    });
                 },
                 createError: '',
                 isCreating: false,
