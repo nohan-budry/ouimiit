@@ -119,21 +119,21 @@
                                         </button>
                                     </div>
                                 </div>
-                                <div>
+                                <div class="min-w-0">
                                     <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Dates</label>
                                     <div class="space-y-2">
                                         <template x-for="(date, index) in createForm.dates" :key="index">
-                                            <div class="flex items-center gap-2">
-                                                <div class="flex-1 relative">
+                                            <div class="flex min-w-0 items-center gap-2">
+                                                <div class="relative min-w-0 flex-1">
                                                     <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 uppercase pointer-events-none" x-text="formatWeekdayShort(createForm.dates[index])"></span>
                                                     <input
                                                         type="date"
                                                         x-model="createForm.dates[index]"
-                                                        class="w-full pl-12 pr-3 py-2 rounded-lg border border-blue-100 bg-blue-50/50 focus:outline-none focus:border-blue-300 transition-all text-sm">
+                                                        class="w-full min-w-0 pl-12 pr-3 py-2 rounded-lg border border-blue-100 bg-blue-50/50 focus:outline-none focus:border-blue-300 transition-all text-sm">
                                                 </div>
                                                 <button 
                                                     @click="removeDate(index)"
-                                                    class="text-slate-300 hover:text-rose-500 transition-colors"
+                                                    class="shrink-0 text-slate-300 hover:text-rose-500 transition-colors"
                                                     :disabled="createForm.dates.length <= 1"
                                                     x-show="createForm.dates.length > 1">
                                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
