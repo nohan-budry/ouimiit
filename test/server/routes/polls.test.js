@@ -347,7 +347,9 @@ describe('server route handlers', { concurrency: false }, () => {
             [{ id: 'negative-minimum', users: ['Alice'], dates: ['2026-10-20'], minPeople: -1 }, 'Le nombre minimum de personnes doit être un entier positif ou nul'],
             [{ id: 'fractional-minimum', users: ['Alice'], dates: ['2026-10-20'], minPeople: 1.5 }, 'Le nombre minimum de personnes doit être un entier positif ou nul'],
             [{ id: 'malformed-minimum', users: ['Alice'], dates: ['2026-10-20'], minPeople: 'oops' }, 'Le nombre minimum de personnes doit être un entier positif ou nul'],
-            [{ id: 'wrong-type-minimum', users: ['Alice'], dates: ['2026-10-20'], minPeople: true }, 'Le nombre minimum de personnes doit être un entier positif ou nul']
+            [{ id: 'wrong-type-minimum', users: ['Alice'], dates: ['2026-10-20'], minPeople: true }, 'Le nombre minimum de personnes doit être un entier positif ou nul'],
+            [{ id: 'object-minimum', users: ['Alice'], dates: ['2026-10-20'], minPeople: { toString: null } }, 'Le nombre minimum de personnes doit être un entier positif ou nul'],
+            [{ id: 'unsafe-minimum', users: ['Alice'], dates: ['2026-10-20'], minPeople: 1e100 }, 'Le nombre minimum de personnes doit être un entier positif ou nul']
         ];
 
         for (const [body, expectedMessage] of cases) {
