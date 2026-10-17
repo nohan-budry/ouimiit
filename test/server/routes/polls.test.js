@@ -88,10 +88,22 @@ describe('server route handlers', { concurrency: false }, () => {
     });
 
     test('GET handler rejects an invalid id without calling the database', () => {
+        for (const id of ['../secret', ['team-a']]) {
+            const database = makeDatabase();
+            const response = makeResponse();
+
+            createPollHandlers(database).getPoll({ query: { id } }, response);
+
+            assert.deepEqual(database.calls, []);
+            assert.equal(response.statusCode, 400);
+        }
+    });
+
+    test('GET handler rejects a missing id without calling the database', () => {
         const database = makeDatabase();
         const response = makeResponse();
 
-        createPollHandlers(database).getPoll({ query: { id: '../secret' } }, response);
+        createPollHandlers(database).getPoll({ query: {} }, response);
 
         assert.deepEqual(database.calls, []);
         assert.equal(response.statusCode, 400);
@@ -156,21 +168,45 @@ describe('server route handlers', { concurrency: false }, () => {
     });
 
     test('PATCH handler validates update items before calling the database', () => {
-        const database = makeDatabase();
-        const response = makeResponse();
+        for (const update of [null, 'not-an-object']) {
+            const database = makeDatabase();
+            const response = makeResponse();
 
-        createPollHandlers(database).updatePoll(
-            { query: { id: 'team-a' }, body: { user: 'Alice', updates: [null] } },
-            response
-        );
+            createPollHandlers(database).updatePoll(
+                { query: { id: 'team-a' }, body: { user: 'Alice', updates: [update] } },
+                response
+            );
 
-        assert.deepEqual(database.calls, []);
-        assert.equal(response.statusCode, 400);
+            assert.deepEqual(database.calls, []);
+            assert.equal(response.statusCode, 400);
+        }
+    });
+
+    test('PATCH handler rejects malformed update fields without calling the database', () => {
+        const cases = [
+            [{ date: '', available: true }],
+            [{ date: '2026-10-20', available: 'yes' }],
+            [{ date: 20261020, available: true }]
+        ];
+
+        for (const updates of cases) {
+            const database = makeDatabase();
+            const response = makeResponse();
+
+            createPollHandlers(database).updatePoll(
+                { query: { id: 'team-a' }, body: { user: 'Alice', updates } },
+                response
+            );
+
+            assert.deepEqual(database.calls, []);
+            assert.equal(response.statusCode, 400);
+        }
     });
 
     test('PATCH handler rejects missing users and non-array updates without database calls', () => {
         const cases = [
             [{ user: '', updates: [] }, 'Utilisateur manquant'],
+            [{ user: 12, updates: [] }, 'Utilisateur manquant'],
             [{ user: 'Alice', updates: null }, 'Le champ updates doit être un tableau']
         ];
 
@@ -296,13 +332,20 @@ describe('server route handlers', { concurrency: false }, () => {
 
     test('POST handler rejects invalid inputs before calling the database', () => {
         const cases = [
+            [{ users: ['Alice'], dates: ['2026-10-20'] }, 'Identifiant du sondage invalide'],
             [{ id: '../bad', users: ['Alice'], dates: ['2026-10-20'] }, 'Identifiant du sondage invalide'],
             [{ id: 'missing-users', users: [], dates: ['2026-10-20'] }, 'La liste des participants est requise'],
+            [{ id: 'non-array-users', users: 'Alice', dates: ['2026-10-20'] }, 'La liste des participants est requise'],
             [{ id: 'invalid-user', users: [' '], dates: ['2026-10-20'] }, 'La liste des participants est requise'],
+            [{ id: 'non-string-user', users: [null], dates: ['2026-10-20'] }, 'La liste des participants est requise'],
             [{ id: 'duplicate-users', users: ['Alice', ' Alice '], dates: ['2026-10-20'] }, 'Les participants doivent être uniques'],
             [{ id: 'missing-dates', users: ['Alice'], dates: [] }, 'La liste des dates est requise'],
+            [{ id: 'non-array-dates', users: ['Alice'], dates: '2026-10-20' }, 'La liste des dates est requise'],
+            [{ id: 'invalid-date-format', users: ['Alice'], dates: ['tomorrow'] }, 'Chaque date doit être une date valide au format AAAA-MM-JJ'],
+            [{ id: 'non-string-date', users: ['Alice'], dates: [null] }, 'Chaque date doit être une date valide au format AAAA-MM-JJ'],
             [{ id: 'duplicate-dates', users: ['Alice'], dates: ['2026-10-20', '2026-10-20'] }, 'Les dates doivent être uniques'],
-            [{ id: 'invalid-minimum', users: ['Alice'], dates: ['2026-10-20'], minPeople: -1 }, 'Le nombre minimum de personnes doit être un entier positif ou nul']
+            [{ id: 'negative-minimum', users: ['Alice'], dates: ['2026-10-20'], minPeople: -1 }, 'Le nombre minimum de personnes doit être un entier positif ou nul'],
+            [{ id: 'fractional-minimum', users: ['Alice'], dates: ['2026-10-20'], minPeople: 1.5 }, 'Le nombre minimum de personnes doit être un entier positif ou nul']
         ];
 
         for (const [body, expectedMessage] of cases) {

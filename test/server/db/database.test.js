@@ -14,12 +14,14 @@ const {
 describe('database layer', { concurrency: false }, () => {
     let database;
     let directory;
+    let databasePath;
 
     before(() => {
         directory = fs.mkdtempSync(path.join(os.tmpdir(), 'ouimiit-db-test-'));
+        databasePath = path.join(directory, 'test.sqlite');
 
         try {
-            database = openDatabase(path.join(directory, 'test.sqlite'));
+            database = openDatabase(databasePath);
         } catch (error) {
             fs.rmSync(directory, { recursive: true, force: true });
             throw error;
@@ -52,6 +54,29 @@ describe('database layer', { concurrency: false }, () => {
         );
     });
 
+    it('reopens the same database without applying the migration again', () => {
+        const reopenedDatabase = openDatabase(databasePath);
+
+        try {
+            assert.equal(reopenedDatabase.getPoll('missing'), null);
+            assert.deepEqual(
+                reopenedDatabase.database.prepare('SELECT VERSION FROM DB_MIGRATIONS')
+                    .all()
+                    .map((row) => row.VERSION),
+                ['001-initial-schema.sql']
+            );
+        } finally {
+            reopenedDatabase.close();
+        }
+    });
+
+    it('fails cleanly when the configured database file is invalid', () => {
+        const invalidDatabasePath = path.join(directory, 'invalid.sqlite');
+        fs.writeFileSync(invalidDatabasePath, 'not a SQLite database');
+
+        assert.throws(() => openDatabase(invalidDatabasePath));
+    });
+
     it('creates polls and preserves participant and date order', () => {
         assert.equal(database.createPoll('create-order', pollConfig), true);
         assert.deepEqual(database.getPoll('create-order').config, pollConfig);
@@ -62,6 +87,15 @@ describe('database layer', { concurrency: false }, () => {
         assert.equal(database.createPoll('duplicate-poll', pollConfig), true);
         assert.equal(database.createPoll('duplicate-poll', { ...pollConfig, minPeople: 1 }), false);
         assert.equal(database.getPoll('duplicate-poll').config.minPeople, 2);
+    });
+
+    it('rolls back poll creation if a participant violates a database constraint', () => {
+        assert.throws(() => database.createPoll('rollback-create', {
+            ...pollConfig,
+            users: ['Alice', 'Alice']
+        }));
+
+        assert.equal(database.getPoll('rollback-create'), null);
     });
 
     it('stores explicit yes and no answers while leaving unanswered dates absent', () => {
@@ -88,6 +122,14 @@ describe('database layer', { concurrency: false }, () => {
         ]);
 
         assert.equal(poll.responses.Alice['2026-10-20'], false);
+    });
+
+    it('treats an empty update list as a no-op', () => {
+        database.createPoll('empty-update', pollConfig);
+
+        const poll = database.updateResponses('empty-update', 'Alice', []);
+
+        assert.deepEqual(Object.keys(poll.responses), []);
     });
 
     it('rejects unknown polls, participants, and dates', () => {
