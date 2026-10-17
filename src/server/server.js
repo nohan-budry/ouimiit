@@ -3,10 +3,12 @@ const fs = require('fs');
 const path = require('path');
 const app = express();
 
-app.use(express.json());
-app.use(express.static('public'));
+const PROJECT_ROOT = path.resolve(__dirname, '../..');
 
-const DATA_DIR = path.join(__dirname, 'data');
+app.use(express.json());
+app.use(express.static(path.join(PROJECT_ROOT, 'public')));
+
+const DATA_DIR = path.join(PROJECT_ROOT, 'data');
 
 const ensureDataDir = () => {
     if (!fs.existsSync(DATA_DIR)) {
@@ -57,7 +59,8 @@ app.patch('/api/poll', (req, res) => {
         res.status(400).json({ error: "Identifiant du sondage manquant ou invalide" });
         return;
     }
-    const { user, updates } = req.body;
+    const body = req.body ?? {};
+    const { user, updates } = body;
     if (!user) {
         res.status(400).json({ error: 'Utilisateur manquant' });
         return;
@@ -97,7 +100,8 @@ app.patch('/api/poll', (req, res) => {
 });
 
 app.post('/api/poll', (req, res) => {
-    const pollId = sanitizePollId(req.body.id);
+    const body = req.body ?? {};
+    const pollId = sanitizePollId(body.id);
     if (!pollId) {
         res.status(400).json({ error: "Identifiant du sondage invalide" });
         return;
@@ -109,7 +113,7 @@ app.post('/api/poll', (req, res) => {
         return;
     }
 
-    const { users, dates, minPeople } = req.body;
+    const { users, dates, minPeople } = body;
     if (!Array.isArray(users) || users.length === 0) {
         res.status(400).json({ error: "La liste des participants est requise" });
         return;

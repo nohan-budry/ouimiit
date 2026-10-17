@@ -36,7 +36,7 @@ npm install
 
 ## Run (dev)
 
-Dev mode watches `server.js` for server restarts.
+Dev mode watches `src/server/server.js` for server restarts.
 
 ```bash
 npm run dev
@@ -53,7 +53,7 @@ Server listens on `http://localhost:3000`.
 ## Docker
 
 The Docker image uses `node:18-alpine`, installs dependencies, and runs
-`server.js` on port 3000.
+`src/server/server.js` on port 3000.
 
 Build and run:
 
