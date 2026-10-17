@@ -1,14 +1,14 @@
 # Ouimiit
 
 Simple RSVP/availability planner for a small group. The UI lets users pick
-availability per date, saves responses to `data/data.json`, and shows a
-summary table.
+availability per date, stores polls in SQLite at `data/ouimiit.sqlite`, and
+shows a summary table.
 
 “Ouimiit” is meant to be read with a French accent — it roughly sounds like “We meet.”
 
 ## Configuration
 
-Each poll is stored in `data/<id>.json`. The config lives alongside responses:
+The poll API uses this shape; SQLite stores it across normalized tables:
 
 ```json
 {
@@ -26,9 +26,13 @@ Each poll is stored in `data/<id>.json`. The config lives alongside responses:
 Pass a query param `id` to select a poll:
 
 - `http://localhost:3000` shows the join form
-- `http://localhost:3000/?id=team-a` uses `data/team-a.json`
+- `http://localhost:3000/?id=team-a` loads the `team-a` poll from SQLite
+
+Existing JSON poll files are not imported automatically. For a one-time v1-to-v2 migration, see [the migration guide](scripts/migrate-v1-to-v2/README.md).
 
 ## Install
+
+Requires Node.js 26.0.0 or newer. The project uses Node's built-in `node:sqlite` module and is tested on Node 26.
 
 ```bash
 npm install
@@ -36,7 +40,7 @@ npm install
 
 ## Run (dev)
 
-Dev mode watches `server.js` for server restarts.
+Dev mode watches `src/server/server.js` for server restarts.
 
 ```bash
 npm run dev
@@ -52,8 +56,8 @@ Server listens on `http://localhost:3000`.
 
 ## Docker
 
-The Docker image uses `node:18-alpine`, installs dependencies, and runs
-`server.js` on port 3000.
+The Docker image uses `node:26-alpine`, installs dependencies, and runs
+`src/server/server.js` on port 3000.
 
 Build and run:
 
