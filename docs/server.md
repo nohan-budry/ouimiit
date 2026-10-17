@@ -4,7 +4,7 @@ This document provides a description of the server and the API specifications fo
 
 ## Overview
 
-The server is built with Node.js and Express. It serves as a backend to manage polls, allowing users to submit their availability for specific dates. Poll data is stored as JSON files in the `data/` directory.
+The server is built with Node.js and Express. It serves as a backend to manage polls, allowing users to submit their availability for specific dates. Poll data is stored in the SQLite database at `data/ouimiit.sqlite`.
 
 ### Running the Server
 
@@ -52,7 +52,7 @@ Updates or adds a user's availability for one or multiple dates in a poll.
   - **Code**: 200 OK
   - **Content**: A JSON object representing the updated poll.
 - **Error Responses**:
-  - **Code**: 400 Bad Request (Missing user, invalid updates format, invalid update item, date not in poll, or invalid ID)
+- **Code**: 400 Bad Request (Missing or invalid user, invalid updates format, invalid update item, date not in poll, or invalid ID)
   - **Code**: 404 Not Found (Poll not found)
 
 ### Create Poll
@@ -78,14 +78,8 @@ Creates a new poll with a configuration of users and dates.
 
 ## Storage
 
-Polls are stored in the `data/` directory as `<pollId>.json`.
-The structure of a poll file is typically:
-```json
-{
-  "responses": {
-    "username": {
-      "YYYY-MM-DD": true
-    }
-  }
-}
-```
+The SQLite database is stored at `data/ouimiit.sqlite`. Numbered schema migrations live in `src/server/db/migrations/` and are applied when the server starts.
+
+Polls use the `POLLS`, `POLL_PARTICIPANTS`, `POLL_DATES`, and `POLL_RESPONSES` tables. A missing row in `POLL_RESPONSES` means that participant has not answered for that date; `AVAILABLE` stores an explicit yes or no.
+
+The database is excluded from Git and Docker build contexts. Mount `data/` as a persistent volume when deploying with Docker. Existing JSON poll files are not imported automatically.

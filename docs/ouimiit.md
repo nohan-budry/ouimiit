@@ -25,6 +25,6 @@ OUIMIIT is a simple, trust-based availability planner designed to help groups co
 
 - **Frontend**: Single-page application built with [Alpine.js](https://alpinejs.dev/) and styled with [Tailwind CSS](https://tailwindcss.com/).
 - **Backend**: [Node.js/Express server](server.md) managing data persistence.
-- **Storage**: JSON-based file storage.
+- **Storage**: SQLite database with schema migrations.
 
 For more details on the API and server implementation, see the [Server Documentation](server.md).
