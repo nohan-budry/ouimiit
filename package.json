@@ -12,9 +12,11 @@
   },
   "scripts": {
     "start": "node src/server/server.js",
-    "dev": "node --watch src/server/server.js"
+    "dev": "node --watch src/server/server.js",
+    "test": "node --test"
   },
   "dependencies": {
+    "better-sqlite3": "^13.0.3",
     "express": "^5.3.0"
   }
 }

@@ -52,7 +52,7 @@ Server listens on `http://localhost:3000`.
 
 ## Docker
 
-The Docker image uses `node:18-alpine`, installs dependencies, and runs
+The Docker image uses `node:22-alpine`, installs dependencies, and runs
 `src/server/server.js` on port 3000.
 
 Build and run:
