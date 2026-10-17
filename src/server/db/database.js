@@ -1,10 +1,26 @@
 const fs = require('fs');
 const path = require('path');
-const BetterSqlite3 = require('better-sqlite3');
+const { DatabaseSync } = require('node:sqlite');
 
 const PROJECT_ROOT = path.resolve(__dirname, '../../..');
 const MIGRATIONS_DIR = path.join(__dirname, 'migrations');
 const DEFAULT_DATABASE_PATH = path.join(PROJECT_ROOT, 'data', 'ouimiit.sqlite');
+
+const runInTransaction = (database, callback) => (...args) => {
+    database.exec('BEGIN IMMEDIATE');
+    try {
+        const result = callback(...args);
+        database.exec('COMMIT');
+        return result;
+    } catch (error) {
+        try {
+            database.exec('ROLLBACK');
+        } catch {
+            // Keep the original failure if SQLite has already ended the transaction.
+        }
+        throw error;
+    }
+};
 
 class PollNotFoundError extends Error {
     constructor(pollId) {
@@ -55,7 +71,7 @@ const applyMigrations = (database) => {
         if (getAppliedMigration.get(file)) continue;
 
         const migration = fs.readFileSync(path.join(MIGRATIONS_DIR, file), 'utf8');
-        database.transaction(() => {
+        runInTransaction(database, () => {
             database.exec(migration);
             recordMigration.run(file);
         })();
@@ -121,7 +137,7 @@ class PollDatabase {
             `)
         };
 
-        this.insertPollTransaction = database.transaction((pollId, config) => {
+        this.insertPollTransaction = runInTransaction(database, (pollId, config) => {
             const result = this.statements.insertPoll.run(
                 pollId,
                 Number(config.minPeople) || 0
@@ -138,7 +154,7 @@ class PollDatabase {
             return true;
         });
 
-        this.updateResponsesTransaction = database.transaction((pollId, user, updates) => {
+        this.updateResponsesTransaction = runInTransaction(database, (pollId, user, updates) => {
             if (!this.statements.getPoll.get(pollId)) {
                 throw new PollNotFoundError(pollId);
             }
@@ -209,11 +225,10 @@ const openDatabase = (databasePath = process.env.OUIMIIT_DB_PATH || DEFAULT_DATA
     const resolvedPath = path.resolve(databasePath);
     fs.mkdirSync(path.dirname(resolvedPath), { recursive: true });
 
-    const database = new BetterSqlite3(resolvedPath);
+    const database = new DatabaseSync(resolvedPath, { timeout: 5000 });
     try {
-        database.pragma('foreign_keys = ON');
-        database.pragma('busy_timeout = 5000');
-        database.pragma('journal_mode = WAL');
+        database.exec('PRAGMA FOREIGN_KEYS = ON');
+        database.exec('PRAGMA JOURNAL_MODE = WAL');
         applyMigrations(database);
         return new PollDatabase(database);
     } catch (error) {

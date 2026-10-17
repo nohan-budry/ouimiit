@@ -45,7 +45,9 @@ describe('database layer', { concurrency: false }, () => {
     it('applies the initial migration before the database tests', () => {
         assert.equal(database.getPoll('missing'), null);
         assert.deepEqual(
-            database.database.prepare('SELECT VERSION FROM DB_MIGRATIONS').pluck().all(),
+            database.database.prepare('SELECT VERSION FROM DB_MIGRATIONS')
+                .all()
+                .map((row) => row.VERSION),
             ['001-initial-schema.sql']
         );
     });
