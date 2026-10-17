@@ -114,8 +114,14 @@ const createPollHandlers = (database) => ({
             return res.status(400).json({ error: 'Les dates doivent être uniques' });
         }
 
-        const minPeople = Number(body.minPeople) || 0;
-        if (!Number.isInteger(minPeople) || minPeople < 0) {
+        const rawMinPeople = body.minPeople;
+        const minPeopleIsEmpty = rawMinPeople == null ||
+            (typeof rawMinPeople === 'string' && rawMinPeople.trim() === '');
+        const minPeople = minPeopleIsEmpty ? 0 : Number(rawMinPeople);
+        const minPeopleHasValidType = minPeopleIsEmpty ||
+            typeof rawMinPeople === 'number' ||
+            typeof rawMinPeople === 'string';
+        if (!minPeopleHasValidType || !Number.isInteger(minPeople) || minPeople < 0) {
             return res.status(400).json({
                 error: 'Le nombre minimum de personnes doit être un entier positif ou nul'
             });

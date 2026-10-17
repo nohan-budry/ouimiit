@@ -32,6 +32,8 @@ Existing JSON poll files are not imported automatically.
 
 ## Install
 
+Requires Node.js 26.0.0 or newer. The project uses Node's built-in `node:sqlite` module and is tested on Node 26.
+
 ```bash
 npm install
 ```

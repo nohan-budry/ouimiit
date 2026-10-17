@@ -345,7 +345,9 @@ describe('server route handlers', { concurrency: false }, () => {
             [{ id: 'non-string-date', users: ['Alice'], dates: [null] }, 'Chaque date doit être une date valide au format AAAA-MM-JJ'],
             [{ id: 'duplicate-dates', users: ['Alice'], dates: ['2026-10-20', '2026-10-20'] }, 'Les dates doivent être uniques'],
             [{ id: 'negative-minimum', users: ['Alice'], dates: ['2026-10-20'], minPeople: -1 }, 'Le nombre minimum de personnes doit être un entier positif ou nul'],
-            [{ id: 'fractional-minimum', users: ['Alice'], dates: ['2026-10-20'], minPeople: 1.5 }, 'Le nombre minimum de personnes doit être un entier positif ou nul']
+            [{ id: 'fractional-minimum', users: ['Alice'], dates: ['2026-10-20'], minPeople: 1.5 }, 'Le nombre minimum de personnes doit être un entier positif ou nul'],
+            [{ id: 'malformed-minimum', users: ['Alice'], dates: ['2026-10-20'], minPeople: 'oops' }, 'Le nombre minimum de personnes doit être un entier positif ou nul'],
+            [{ id: 'wrong-type-minimum', users: ['Alice'], dates: ['2026-10-20'], minPeople: true }, 'Le nombre minimum de personnes doit être un entier positif ou nul']
         ];
 
         for (const [body, expectedMessage] of cases) {
@@ -358,6 +360,27 @@ describe('server route handlers', { concurrency: false }, () => {
             assert.equal(response.statusCode, 400);
             assert.equal(response.body.error, expectedMessage);
         }
+    });
+
+    test('POST handler defaults an empty minimum to zero', () => {
+        const poll = { config: { users: ['Alice'], dates: ['2026-10-20'], minPeople: 0 }, responses: {} };
+        const database = makeDatabase({ poll });
+        const response = makeResponse();
+
+        createPollHandlers(database).createPoll({
+            body: {
+                id: 'empty-minimum',
+                users: ['Alice'],
+                dates: ['2026-10-20'],
+                minPeople: '   '
+            }
+        }, response);
+
+        assert.deepEqual(database.calls, [
+            { method: 'createPoll', args: ['empty-minimum', { users: ['Alice'], dates: ['2026-10-20'], minPeople: 0 }] },
+            { method: 'getPoll', args: ['empty-minimum'] }
+        ]);
+        assert.equal(response.statusCode, 200);
     });
 
     test('POST handler returns a generic 500 if the database fails', () => {

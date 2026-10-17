@@ -68,10 +68,11 @@ const applyMigrations = (database) => {
         .sort();
 
     for (const file of migrationFiles) {
-        if (getAppliedMigration.get(file)) continue;
-
         const migration = fs.readFileSync(path.join(MIGRATIONS_DIR, file), 'utf8');
         runInTransaction(database, () => {
+            // Check after BEGIN IMMEDIATE: another process may have applied it
+            // while this connection was waiting for the write lock.
+            if (getAppliedMigration.get(file)) return;
             database.exec(migration);
             recordMigration.run(file);
         })();

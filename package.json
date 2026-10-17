@@ -1,6 +1,9 @@
 {
   "name": "ouimiit",
   "version": "1.0.0",
+  "engines": {
+    "node": ">=26.0.0"
+  },
   "main": "src/server/server.js",
   "repository": {
     "type": "git",
