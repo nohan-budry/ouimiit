@@ -28,7 +28,7 @@ Pass a query param `id` to select a poll:
 - `http://localhost:3000` shows the join form
 - `http://localhost:3000/?id=team-a` loads the `team-a` poll from SQLite
 
-Existing JSON poll files are not imported automatically.
+Existing JSON poll files are not imported automatically. For a one-time v1-to-v2 migration, see [the migration guide](scripts/migrate-v1-to-v2/README.md).
 
 ## Install
 

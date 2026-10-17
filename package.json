@@ -1,6 +1,6 @@
 {
   "name": "ouimiit",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "engines": {
     "node": ">=26.0.0"
   },
@@ -16,8 +16,10 @@
   "scripts": {
     "start": "node src/server/server.js",
     "dev": "node --watch src/server/server.js",
-    "test": "node --test",
-    "test:coverage": "node --experimental-test-coverage --test --test-coverage-include-all"
+    "test": "node --test test/server",
+    "test:coverage": "node --experimental-test-coverage --test --test-coverage-include-all '--test-coverage-include=src/server/**/*.js' test/server",
+    "test:migrate:v1-to-v2": "node --test scripts/migrate-v1-to-v2/migrate.test.js",
+    "migrate:v1-to-v2": "node scripts/migrate-v1-to-v2/migrate.js"
   },
   "dependencies": {
     "express": "^5.3.0"
