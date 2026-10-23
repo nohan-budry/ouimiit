@@ -11,6 +11,12 @@ const createApp = (database) => {
     app.use(express.json());
     app.use(express.static(path.join(PROJECT_ROOT, 'public')));
     registerPollRoutes(app, database);
+    app.use((error, req, res, next) => {
+        if (error.type === 'entity.parse.failed') {
+            return res.status(400).json({ error: 'JSON invalide' });
+        }
+        return next(error);
+    });
 
     return app;
 };
@@ -42,11 +48,7 @@ const startServer = (options = {}) => {
         }
     };
 
-    const server = app.listen(port, (error) => {
-        if (error) {
-            handleListenError(error);
-            return;
-        }
+    const server = app.listen(port, () => {
         if (!listenFailed) logger.log(`Server running on port ${port}`);
     });
     server.on('error', handleListenError);
