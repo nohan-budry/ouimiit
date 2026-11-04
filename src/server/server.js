@@ -11,6 +11,12 @@ const createApp = (database) => {
     app.use(express.json());
     app.use(express.static(path.join(PROJECT_ROOT, 'public')));
     registerPollRoutes(app, database);
+    app.use((error, req, res, next) => {
+        if (error.type === 'entity.parse.failed') {
+            return res.status(400).json({ error: 'JSON invalide' });
+        }
+        return next(error);
+    });
 
     return app;
 };
