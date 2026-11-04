@@ -48,7 +48,11 @@ const startServer = (options = {}) => {
         }
     };
 
-    const server = app.listen(port, () => {
+    const server = app.listen(port, (error) => {
+        if (error) {
+            handleListenError(error);
+            return;
+        }
         if (!listenFailed) logger.log(`Server running on port ${port}`);
     });
     server.on('error', handleListenError);
